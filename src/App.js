@@ -35,7 +35,7 @@ class App extends Component {
     }
 
     updateData = (newData) => {
-        console.log(newData);
+        // console.log(newData);
         this.setState({ 
             data: newData 
         });
@@ -48,8 +48,8 @@ class App extends Component {
         });
     }
 
-    componentWillReceiveProps({ isScriptLoaded, isScriptLoadSucceed }) {
-        console.log(isScriptLoaded);
+    componentWillReceiveProps({ isScriptLoadSucceed }) {
+        // console.log(isScriptLoadSucceed);
         if(isScriptLoadSucceed) {
             // console.log("succeed");
             var map = new window.google.maps.Map(document.getElementById('map'),{
@@ -64,9 +64,9 @@ class App extends Component {
     }
 
     componentDidUpdate() {
-        const { locations, query, map, data, foursquareError } = this.state;
+        const { locations, query, map, data, seccessfulRequest } = this.state;
         let showLocations = locations;
-        // console.log(foursquareError);
+
         if(query) {
             const match = new RegExp(escapeRegExp(query), 'i')
             showLocations = locations.filter((location) => match.test(location.name))
@@ -77,103 +77,104 @@ class App extends Component {
         markers.forEach(marker => { marker.setMap(null) });
         markers = [];
         infoWindows = [];
-        showLocations.map((marker, index) => {
+        showLocations.map((marker) => {
 
             // Get Accuret Place Name
-            let getCorrectName = data.filter((single) => single[0].name.includes(marker.name)).map(item2 => {// marker.name === single[0].name
-                console.log(item2);
-                if(item2.length === 0 ){
-                    return 'No Result, Please try again!';
-                } else if (item2[0] !== '' ){
-                    if (item2[0] !== undefined) {
-                        console.log(item2[0].name);
-                        return item2[0].name;
+            if (seccessfulRequest) {
+                let getCorrectName = data.filter((single) => single[0].name.includes(marker.name)).map(item2 => {// marker.name === single[0].name
+                    // console.log(item2);
+                    if(item2.length === 0 ){
+                        return 'No Result, Please try again!';
+                    } else if (item2[0] !== '' ){
+                        if (item2[0] !== undefined) {
+                            // console.log(item2[0].name);
+                            return item2[0].name;
+                        }
+                        else {
+                            console.log(item2[0]);    
+                            return "Error in retrive data!"
+                        }
+                    } else {
+                        return 'No Result, Please try again!';
                     }
-                    else {
-                        console.log(item2[0]);    
-                        return "Error in retrive data!"
+                });
+                
+                // Get Accuret Location
+                let getData = data.filter((single) => single[0].name.includes(marker.name)).map(item2 => {// marker.name === single[0].name
+                    // console.log(item2);
+                    if(item2.length === 0 ){
+                        return 'No Result, Please try again!';
+                    } else if (item2[0] !== '' ){
+                        // console.log("Address: " + item2[0].location);
+                        return "Address: " + item2[0].location['address'] + "\nCity: " + item2[0].location['city'] + "\nCountry: " + item2[0].location['country'];
+                    } else {
+                        return 'No Result, Please try again!';
                     }
-                } else {
-                    return 'No Result, Please try again!';
-                }
-            });
-            
-            // Get Accuret Location
-            let getData = data.filter((single) => single[0].name.includes(marker.name)).map(item2 => {// marker.name === single[0].name
-                // console.log(item2);
-                if(item2.length === 0 ){
-                    return 'No Result, Please try again!';
-                } else if (item2[0] !== '' ){
-                    // console.log("Address: " + item2[0].location);
-                    return "Address: " + item2[0].location['address'] + "\nCity: " + item2[0].location['city'] + "\nCountry: " + item2[0].location['country'];
-                } else {
-                    return 'No Result, Please try again!';
-                }
-            });
-            
-            // Get Status of checked in 
-            let getStatus = data.filter((single) => single[0].name.includes(marker.name)).map(item2 => {
-                // console.log(item2);
-                let da = []
-                if(item2.length === 0 ){
-                    return 'Nothing to Show!';
-                } else if (item2[0] !== '' ){
-                    // console.log(item2[0].hereNow);
-                    da.push(item2[0].hereNow.count)
-                    da.push(item2[0].hereNow.summary)
-                    console.log(da);
-                    
-                    return da;
-                } else {
-                    return 'Nothing to Show!';
-                }
-            });
+                });
+                
+                // Get Status of checked in 
+                let getStatus = data.filter((single) => single[0].name.includes(marker.name)).map(item2 => {
+                    // console.log(item2);
+                    let da = []
+                    if(item2.length === 0 ){
+                        return 'Nothing to Show!';
+                    } else if (item2[0] !== '' ){
+                        // console.log(item2[0].hereNow);
+                        da.push(item2[0].hereNow.count)
+                        da.push(item2[0].hereNow.summary)
+                        // console.log(da);
+                        
+                        return da;
+                    } else {
+                        return 'Nothing to Show!';
+                    }
+                });
 
-            var contentInfo =   `<div tabIndex="0" class="infoWindow">
-                                    <h4>${getCorrectName[0]}</h4>
-                                    <p>${getData}</p>
-                                    <p>${getStatus[0]}</p>
-                                </div>`;
+                var contentInfo =   `<div tabIndex="0" class="infoWindow">
+                                        <h4>${getCorrectName[0]}</h4>
+                                        <p>${getData}</p>
+                                        <p>${getStatus[0]}</p>
+                                    </div>`;
 
-            let addInfoWindow = new window.google.maps.InfoWindow(
-                { content: contentInfo }
-            );
-            let bounds = new window.google.maps.LatLngBounds();
-            let addMarker = new window.google.maps.Marker({
-                map: map,
-                position: marker.location,
-                animation: window.google.maps.Animation.DROP,
-                name: marker.name
-            });
-            markers.push(addMarker);
-            infoWindows.push(addInfoWindow);
-            addMarker.addListener('click', function(){
-                infoWindows.forEach(info => {info.close() });
-                addInfoWindow.open(map, addMarker);
-                if(addMarker.getAnimation() !== null){
-                    addMarker.setAnimation(null);
-                } else {
-                    addMarker.setAnimation(window.google.maps.Animation.BOUNCE);
-                    setTimeout(() => { 
+                let addInfoWindow = new window.google.maps.InfoWindow(
+                    { content: contentInfo }
+                );
+                let bounds = new window.google.maps.LatLngBounds();
+                let addMarker = new window.google.maps.Marker({
+                    map: map,
+                    position: marker.location,
+                    animation: window.google.maps.Animation.DROP,
+                    name: marker.name
+                });
+                markers.push(addMarker);
+                infoWindows.push(addInfoWindow);
+                addMarker.addListener('click', function(){
+                    infoWindows.forEach(info => {info.close() });
+                    addInfoWindow.open(map, addMarker);
+                    if(addMarker.getAnimation() !== null){
                         addMarker.setAnimation(null);
-                    }, 500);
-                }
-            });
-            markers.forEach((singleMarker) => 
-                bounds.extend(singleMarker.position)
-            )
-            map.fitBounds(bounds);
-            
+                    } else {
+                        addMarker.setAnimation(window.google.maps.Animation.BOUNCE);
+                        setTimeout(() => { 
+                            addMarker.setAnimation(null);
+                        }, 500);
+                    }
+                });
+                markers.forEach((singleMarker) => 
+                    bounds.extend(singleMarker.position)
+                )
+                map.fitBounds(bounds);
+            }
         })
     }
 
     componentDidMount() {
         this.state.locations.map( (location, index) => {
-            console.log(location);
+            // console.log(location);
             return fetchJsonp(`https://api.foursquare.com/v2/venues/search?client_id=${api.clientId}&client_secret=${api.clientSecret}&v=20180323&ll=${location.location.lat},${location.location.lng}&limit=1`)
             .then(response => response.json()).then( (responseJson) => {
-                console.log(responseJson);
-                if(responseJson.response === undefined || responseJson.response.length == 0){
+                // console.log(responseJson);
+                if(responseJson.response === undefined || responseJson.response.length === 0){
                     let newData = [...this.state.data,[responseJson.meta]];
                     this.updateError(newData)
                 } else {
@@ -265,7 +266,7 @@ class App extends Component {
                 </div>
             ) : (
                 <div>
-                    <h1>Error: Something Went Wrong!</h1>
+                    <h1 style={{'text-align': 'center'}}>Error: Something Went Wrong!</h1>
                 </div>
             )
             
