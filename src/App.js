@@ -266,7 +266,7 @@ class App extends Component {
                 </div>
             ) : (
                 <div>
-                    <h1 style={{'text-align': 'center'}}>Error: Something Went Wrong!</h1>
+                    <h1 style={{'text-align': 'center'}}>Error Google Map Can't be loaded!</h1>
                 </div>
             )
             
